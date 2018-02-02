@@ -1,23 +1,27 @@
 /*globals require, console, Buffer, Promise*/
-var gulp = require('gulp'),
-    gutil = require('gulp-util'),
-    sass = require('gulp-sass'),
-    uglify = require('gulp-uglify'),
-    watch = require('gulp-watch'),
-    concat = require('gulp-concat'),
-    notify = require('gulp-notify'),
-    browserify = require('browserify'),
-    browserify_css = require('browserify-css'),
-    source = require("vinyl-source-stream"),
-    sourcemaps = require('gulp-sourcemaps'),
-    buffer = require('vinyl-buffer'),
-    watchify = require('watchify'),
-    stringify = require('stringify'),
-    fs = require("fs"),
-    text_encoding = require("text-encoding"),
-    parser = require("csv-parse"),
-    git = require("gulp-git"),
-    exec = require('child_process').exec;
+module.exports = function() {
+
+var l = {};
+
+  l.gulp = gulp = require('gulp'),
+  l.util = util = require('gulp-util'),
+  l.sass = sass = require('gulp-sass'),
+  l.uglify = uglify = require('gulp-uglify'),
+  l.watch = watch = require('gulp-watch'),
+  l.concat = concat = require('gulp-concat'),
+  l.notify = notify = require('gulp-notify'),
+  l.browserify = browserify = require('browserify'),
+  l.browserify_css = browserify_css = require('browserify-css'),
+  l.source = source = require("vinyl-source-stream"),
+  l.sourcemaps = sourcemaps = require('gulp-sourcemaps'),
+  l.buffer = buffer = require('vinyl-buffer'),
+  l.watchify = watchify = require('watchify'),
+  l.stringify = stringify = require('stringify'),
+  l.fs = fs = require("fs"),
+  l.text_encoding = text_encoding = require("text-encoding"),
+  l.parser = parser = require("csv-parse"),
+  l.git = git = require("gulp-git"),
+  l.exec = exec = require('child_process').exec;
     //pako = require("pako");
 
 function swallowError(error) {
@@ -29,22 +33,25 @@ function copyIndex() {
   fs.createReadStream('./index.html').pipe(fs.createWriteStream('./build/index.html'));
 }
 
-function get_cbpp_shared_lib(name, cb) {
-  git.clone("https://github.com/CenterOnBudget/" + name, function(err) {
-    if (err) {
-      if (err.code===128) {
-        console.log("CBPP_Figure already exists");
-      } else {
-        throw err;
-      }
-    }
-    exec('npm install', {cwd: process.cwd() + "/" + name}, function(err) {
+l.get_cbpp_shared_lib = function(name, cb) {
+  console.log("Getting shared CBPP libraries...");
+  if (!fs.existsSync("./CBPP_" + name)) {
+    git.clone("https://github.com/CenterOnBudget/" + name, function(err) {
       if (err) {
-        console.log(err);
-        cb();
+        if (err.code===128) {
+          console.log("CBPP_" + name + " already exists");
+        } else {
+          throw err;
+        }
       }
+      exec('npm install', {cwd: process.cwd() + "/" + name}, function(err) {
+        if (err) {
+          console.log(err);
+          cb();
+        }
+      });
     });
-  });
+  }
 }
 
 // sass task
@@ -134,7 +141,7 @@ gulp.task('build-watch', ['sass', 'buildDirectory'], function() {
     .writeBundle();
 });
 
-gulp.task('build', ['sass', 'buildDirectory'], function() {
+gulp.task('build', ['sass', 'buildDirectory', 'cbpp_shared_lib'], function() {
   var b = doBrowserify("./app.js");
   return b
     .doBundle()
@@ -142,7 +149,7 @@ gulp.task('build', ['sass', 'buildDirectory'], function() {
     .writeBundle();
 });
 
-function defaultDataHandler(f_cb) {
+l.defaultDataHandler = function(f_cb) {
   var allJSON = {};
   var fileRead = function(err, data, file, cb) {
     data = Buffer.from(data,'hex');
@@ -199,3 +206,7 @@ function defaultDataHandler(f_cb) {
 }
 
 gulp.task('default', ['build']);
+
+return l;
+
+};
