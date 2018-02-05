@@ -153,7 +153,7 @@ gulp.task("server", function(cb) {
   cb();
 });
 
-gulp.task('build-watch', ['sass', 'buildDirectory', 'server'], function() {
+gulp.task('build-watch', ['sass', 'buildDirectory', 'server', 'cbpp_shared_lib'], function() {
   var ops = {usePolling: true};
   gulp.watch(['./**/*.scss'],ops,['sass']);
   gulp.watch(['./**/*.csv'],ops,['data']);
