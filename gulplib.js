@@ -201,7 +201,7 @@ gulp.task('build', ['sass', 'buildDirectory'], function() {
     .writeBundle();
 });
 
-l.defaultDataHandler = function(f_cb) {
+l.dataHandler = function(f_cb) {
   var allJSON = {};
   var fileRead = function(err, data, file, cb) {
     data = Buffer.from(data,'hex');
@@ -258,6 +258,12 @@ l.defaultDataHandler = function(f_cb) {
     });
   }
 };
+
+gulp.task('data', ['intermediate'], function(taskDone) {
+  l.dataHandler(function(allJSON) {
+    l.fs.writeFile("./intermediate/data.json", JSON.stringify({data:allJSON}), taskDone);
+  });
+});
 
 gulp.task("cbpp_shared_lib", function() {
   console.log("No shared CBPP libraries specified in gulpfile");
