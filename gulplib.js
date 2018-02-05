@@ -36,10 +36,10 @@ function copyIndex() {
 l.get_cbpp_shared_lib = function(name, cb) {
   console.log("Getting shared CBPP libraries...");
   if (!fs.existsSync("./CBPP_" + name)) {
-    git.clone("https://github.com/CenterOnBudget/" + name, function(err) {
+    git.clone("https://github.com/CenterOnBudget/" + name, {args: "--depth=1"}, function(err) {
       if (err) {
         if (err.code===128) {
-          console.log("CBPP_" + name + " already exists");
+          console.log(name + " already exists");
         } else {
           throw err;
         }
@@ -52,7 +52,7 @@ l.get_cbpp_shared_lib = function(name, cb) {
       });
     });
   }
-}
+};
 
 // sass task
 gulp.task('sass', function () {
@@ -194,16 +194,22 @@ l.defaultDataHandler = function(f_cb) {
       }
     });
   };
-  fs.readdir("./csv", function(err, files) {
-    var promises = [];
-    files.forEach(function(file) {
-      promises.push(promiseMaker(file));
+  if (fs.existsSync("./csv")) {
+    fs.readdir("./csv", function(err, files) {
+      var promises = [];
+      files.forEach(function(file) {
+        promises.push(promiseMaker(file));
+      });
+      Promise.all(promises).then(function() {
+        f_cb(allJSON);
+      });
     });
-    Promise.all(promises).then(function() {
-      f_cb(allJSON);
-    });
-  });
-}
+  }
+};
+
+gulp.task("cbpp_shared_lib", function() {
+  console.log("No shared CBPP libraries specified in gulpfile");
+});
 
 gulp.task('default', ['build']);
 
