@@ -95,9 +95,6 @@ function doBrowserify(entries) {
       cache: {},
       packageCache: {}
   });
-  b.plugin(watchify, {
-    poll: true
-  });
   b.transform(browserify_css);
   b.transform(stringify, {
       appliesTo: {includeExtensions: ['.txt','.csv','.html']}
@@ -184,6 +181,9 @@ gulp.task('build-watch', ['sass', 'buildDirectory', 'server'], function() {
   gulp.watch(['./**/*.csv'],ops,['data']);
   gulp.watch(['./index.html'],ops,['copyIndex']);
   var b = doBrowserify("./app.js");
+  b.plugin(watchify, {
+    poll: true
+  });
   b.on('update', function() {
     console.log("file change detected");
     b.doBundle().writeBundle();
