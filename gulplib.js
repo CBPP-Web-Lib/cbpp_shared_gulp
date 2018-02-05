@@ -126,7 +126,34 @@ gulp.task("copyIndex", function(cb) {
   cb();
 });
 
-gulp.task('build-watch', ['sass', 'buildDirectory'], function() {
+gulp.task("server", function(cb) {
+  var http = require('http');
+  var fs = require("fs");
+  var server = http.createServer(function(req, res) {
+    try {
+      fs.readFile("./build" + req.url, function (err, file) {
+        if (err) {
+          res.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+          return;
+        }
+        res.writeHead(200, {
+          'Cache-Control': 'no-cache'
+        });
+        res.write(file);
+        res.end();
+      });
+    } catch (ex) {
+      res.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+    }
+  });
+  server.on('clientError', function (err, socket) {
+    socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+  });
+  server.listen(8000);
+  cb();
+});
+
+gulp.task('build-watch', ['sass', 'buildDirectory', 'server'], function() {
   var ops = {usePolling: true};
   gulp.watch(['./**/*.scss'],ops,['sass']);
   gulp.watch(['./**/*.csv'],ops,['data']);
