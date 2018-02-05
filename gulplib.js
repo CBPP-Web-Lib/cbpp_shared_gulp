@@ -33,33 +33,58 @@ function copyIndex() {
   fs.createReadStream('./index.html').pipe(fs.createWriteStream('./build/index.html'));
 }
 
-l.get_cbpp_shared_lib = function(name, cb) {
-  console.log("Getting shared CBPP libraries...");
-  if (!fs.existsSync("./CBPP_" + name)) {
-    git.clone("https://github.com/CenterOnBudget/" + name, {args: "--depth=1"}, function(err) {
-      if (err) {
-        if (err.code===128) {
-          console.log(name + " already exists");
-        } else {
-          throw err;
+l.get_cbpp_shared_libs = function(arr, cb) {
+  if (typeof(arr)==="string") {
+    l.get_cbpp_shared_lib(arr, cb);
+  } else {
+    var p = [];
+    arr.forEach(function(name) {
+      p.push(new Promise(function(resolve, reject) {
+        try {
+          l.get_cbpp_shared_lib(name, resolve);
+        } catch (ex) {
+          console.log(ex);
+          reject(ex);
         }
+      }));
+    });
+    Promise.all(p).then(function() {
+      if (typeof(cb)==="function") {
+        cb();
       }
-      exec('npm install', {cwd: process.cwd() + "/" + name}, function(err) {
-        if (err) {
-          console.log(err);
-          cb();
-        }
-      });
     });
   }
 };
 
+l.get_cbpp_shared_lib = function(name, cb) {
+  if (!fs.existsSync("./" + name)) {
+    git.clone("https://github.com/CenterOnBudget/" + name, {args: "--depth=1"}, function(err) {
+      if (err) {
+        throw err;
+      }
+      exec('npm install', {cwd: process.cwd() + "/" + name}, function(err) {
+        if (err) {
+          console.log(err);
+        }
+        if (typeof(cb)==="function") {cb();}
+      });
+    });
+  } else {
+    if (typeof(cb)==="function") {cb();}
+  }
+};
+
 // sass task
-gulp.task('sass', function () {
+gulp.task('sass', ['cbpp_shared_lib'], function (cb) {
     gulp.src(['./**/*.scss', '!../**/*/node_modules/**/*.scss'])
     .pipe(sass())
     .on('error', swallowError)
-    .pipe(gulp.dest('./'));
+    .pipe(gulp.dest('./'))
+    .on("end", function() {
+      if (typeof(cb)==="function") {
+        cb();
+      }
+    });
 });
 
 function doBrowserify(entries) {
@@ -153,7 +178,7 @@ gulp.task("server", function(cb) {
   cb();
 });
 
-gulp.task('build-watch', ['sass', 'buildDirectory', 'server', 'cbpp_shared_lib'], function() {
+gulp.task('build-watch', ['sass', 'buildDirectory', 'server'], function() {
   var ops = {usePolling: true};
   gulp.watch(['./**/*.scss'],ops,['sass']);
   gulp.watch(['./**/*.csv'],ops,['data']);
@@ -168,7 +193,7 @@ gulp.task('build-watch', ['sass', 'buildDirectory', 'server', 'cbpp_shared_lib']
     .writeBundle();
 });
 
-gulp.task('build', ['sass', 'buildDirectory', 'cbpp_shared_lib'], function() {
+gulp.task('build', ['sass', 'buildDirectory'], function() {
   var b = doBrowserify("./app.js");
   return b
     .doBundle()
