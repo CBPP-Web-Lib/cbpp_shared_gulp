@@ -24,6 +24,17 @@ var l = {};
   l.exec = exec = require('child_process').exec;
     //pako = require("pako");
 
+  var makeDirectory = l.makeDirectory = function(address, cb) {
+      fs.mkdir(address, function(e) {
+        if (e!==null) {
+          if (e.code!=="EEXIST") {
+            throw new Error(e);
+          }
+        }
+        cb();
+      });
+    }
+
 function swallowError(error) {
     console.log(error.toString());
     this.emit('end');
@@ -124,16 +135,7 @@ function doBrowserify(entries) {
   return b;
 }
 
-function makeDirectory(address, cb) {
-  fs.mkdir(address, function(e) {
-    if (e!==null) {
-      if (e.code!=="EEXIST") {
-        throw new Error(e);
-      }
-    }
-    cb();
-  });
-}
+
 
 gulp.task('buildDirectory', function(cb) {
   makeDirectory("./build", cb);
