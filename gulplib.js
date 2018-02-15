@@ -73,7 +73,7 @@ l.get_cbpp_shared_lib = function(name, cb) {
       if (err) {
         throw err;
       }
-      exec('npm install', {cwd: process.cwd() + "/" + name}, function(err) {
+      exec('npm install --no-bin-links', {cwd: process.cwd() + "/" + name}, function(err) {
         if (err) {
           console.log(err);
         }
