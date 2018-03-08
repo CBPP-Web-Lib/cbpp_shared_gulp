@@ -155,7 +155,7 @@ gulp.task("server", function(cb) {
   var fs = require("fs");
   var server = http.createServer(function(req, res) {
     try {
-      fs.readFile("./build" + req.url, function (err, file) {
+      fs.readFile("./build" + req.url.split("?")[0], function (err, file) {
         if (err) {
           res.end('HTTP/1.1 400 Bad Request\r\n\r\n');
           return;
