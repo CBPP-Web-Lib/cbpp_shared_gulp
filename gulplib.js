@@ -41,7 +41,7 @@ function swallowError(error) {
 }
 
 function copyIndex() {
-  fs.createReadStream('./index.html').pipe(fs.createWriteStream('./build/index.html'));
+  gulp.src('./index.*').pipe(gulp.dest('./build/'));
 }
 
 l.get_cbpp_shared_libs = function(arr, cb) {
@@ -181,7 +181,7 @@ gulp.task('build-watch', ['sass', 'buildDirectory', 'server', 'preBuild'], funct
   var ops = {usePolling: true};
   gulp.watch(['./**/*.scss'],ops,['sass']);
   gulp.watch(['./**/*.csv'],ops,['data']);
-  gulp.watch(['./index.html'],ops,['copyIndex']);
+  gulp.watch(['./index.*'],ops,['copyIndex']);
   var b = doBrowserify("./app.js");
   b.plugin(watchify, {
     poll: true
