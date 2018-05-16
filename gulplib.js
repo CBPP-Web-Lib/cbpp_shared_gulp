@@ -177,11 +177,17 @@ gulp.task("server", function(cb) {
   cb();
 });
 
+l.watch_list = [
+  [['./**/*.scss'],{usePolling: true},['sass']],
+  [['./**/*.csv'],{usePolling: true},['data']],
+  [['./index.*'],{usePolling: true},['copyIndex']]
+];
+
 gulp.task('build-watch', ['sass', 'buildDirectory', 'server', 'preBuild'], function() {
-  var ops = {usePolling: true};
-  gulp.watch(['./**/*.scss'],ops,['sass']);
-  gulp.watch(['./**/*.csv'],ops,['data']);
-  gulp.watch(['./index.*'],ops,['copyIndex']);
+  console.log(l.watch_list);
+  l.watch_list.forEach(function(d) {
+    gulp.watch(d[0], d[1], d[2]);
+  });
   var b = doBrowserify("./app.js");
   b.plugin(watchify, {
     poll: true
