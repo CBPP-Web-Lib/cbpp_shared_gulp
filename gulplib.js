@@ -213,11 +213,13 @@ gulp.task('build', ['sass', 'buildDirectory', 'preBuild'], function() {
     .writeBundle();
 });
 
+l.dataEncoding = "windows-1252";
+
 l.dataHandler = function(f_cb) {
   var allJSON = {};
   var fileRead = function(err, data, file, cb) {
     data = Buffer.from(data,'hex');
-    data = new text_encoding.TextDecoder("windows-1252").decode(data);
+    data = new text_encoding.TextDecoder(l.dataEncoding).decode(data);
     parser(data, function(err, data) {
       fileParse(err, data, file, cb);
     });
