@@ -89,7 +89,7 @@ l.get_cbpp_shared_lib = function(name, cb) {
 gulp.task('sass', ['cbpp_shared_lib'], function (cb) {
   var handleStream = function(src) {
     return new Promise(function(resolve, reject){
-      src
+      gulp.src(src, {base:"./"})
       .pipe(sass())
       .on('error', swallowError)
       .pipe(gulp.dest('.'))
@@ -97,8 +97,8 @@ gulp.task('sass', ['cbpp_shared_lib'], function (cb) {
     });
   };
   Promise.all([
-    handleStream(gulp.src(['./**/*.scss', '!./node_modules/**/*.scss'],{base:"./"})),
-    handleStream(gulp.src(['./node_modules/cbpp*/**/*.scss'],{base:"./"}))
+    handleStream(['./**/*.scss', '!./node_modules/**/*.scss']),
+    handleStream(['./node_modules/cbpp*/**/*.scss'])
   ]).then(function() {
     if (typeof(cb)==="function") {
       cb();
@@ -114,7 +114,7 @@ function doBrowserify(entries) {
       cache: {},
       packageCache: {}
   });
-  b.transform(browserify_css);
+  b.transform(browserify_css, {global:true});
   b.transform(stringify, {
       appliesTo: {includeExtensions: ['.txt','.csv','.html']}
   });
