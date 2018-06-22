@@ -1,0 +1,19 @@
+{
+  "name": "cbpp_shared_gulp",
+  "version": "0.0.1",
+  "description": "shared gulp functions for CBPP interactives",
+  "main": "gulplib.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CenterOnBudget/cbpp_shared_gulp.git"
+  },
+  "author": "Nick Kasprak",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CenterOnBudget/cbpp_shared_gulp/issues"
+  },
+  "homepage": "https://github.com/CenterOnBudget/cbpp_shared_gulp#readme"
+}
