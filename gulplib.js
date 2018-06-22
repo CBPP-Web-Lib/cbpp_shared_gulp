@@ -87,15 +87,23 @@ l.get_cbpp_shared_lib = function(name, cb) {
 
 // sass task
 gulp.task('sass', ['cbpp_shared_lib'], function (cb) {
-    gulp.src(['./**/*.scss', '!../**/*/node_modules/**/*.scss'])
-    .pipe(sass())
-    .on('error', swallowError)
-    .pipe(gulp.dest('./'))
-    .on("end", function() {
-      if (typeof(cb)==="function") {
-        cb();
-      }
+  var handleStream = function(src) {
+    return new Promise(function(resolve, reject){
+      src
+      .pipe(sass())
+      .on('error', swallowError)
+      .pipe(gulp.dest('.'))
+      .on("end", resolve);
     });
+  };
+  Promise.all([
+    handleStream(gulp.src(['./**/*.scss', '!./node_modules/**/*.scss'],{base:"./"})),
+    handleStream(gulp.src(['./node_modules/cbpp*/**/*.scss'],{base:"./"}))
+  ]).then(function() {
+    if (typeof(cb)==="function") {
+      cb();
+    }
+  });
 });
 
 function doBrowserify(entries) {
