@@ -21,6 +21,7 @@ var l = {};
   l.text_encoding = text_encoding = require("text-encoding"),
   l.parser = parser = require("csv-parse"),
   l.git = git = require("gulp-git"),
+  l.babelify = require("babelify"),
   l.exec = exec = require('child_process').exec;
     //pako = require("pako");
 
@@ -115,6 +116,7 @@ function doBrowserify(entries) {
       packageCache: {}
   });
   b.transform(browserify_css, {global:true});
+  b.transform(l.babelify, {presets:["env"]});
   b.transform(stringify, {
       appliesTo: {includeExtensions: ['.txt','.csv','.html']}
   });
