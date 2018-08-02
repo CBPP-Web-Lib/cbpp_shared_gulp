@@ -223,7 +223,7 @@ module.exports = function() {
   });
   
   function babelOutput(cb) {
-    exec("npx babel ./build/js/app.js -o ./build/js/app.js", cb);
+    exec("npx babel ./build/js/app.js -o ./build/js/app.js --source-maps inline", cb);
   }
   
   function minOutput(cb) {
