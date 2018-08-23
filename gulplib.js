@@ -257,7 +257,7 @@ module.exports = function() {
           if (cell==="") {return;}
           var n;
           if (cell.charAt(cell.length-1)==="%") {
-            n = Math.round(cell.replace(/[,%]/g,"")*10)/1000;
+            n = cell.replace(/[,%]/g,"")/100;
           } else {
             n = cell.replace(/Ð/g,"-");
             n = n.replace(/[,$\s]/g,"")*1;
