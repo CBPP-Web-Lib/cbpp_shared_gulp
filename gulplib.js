@@ -241,7 +241,7 @@ module.exports = function() {
   });
   
   l.dataEncoding = "windows-1252";
-  
+  l.percentRounding = 2;
   l.dataHandler = function(f_cb) {
     var allJSON = {};
     var fileRead = function(err, data, file, cb) {
@@ -251,13 +251,14 @@ module.exports = function() {
         fileParse(err, data, file, cb);
       });
     };
+    var m = Math.pow(10, l.percentRounding-2);
     var fileParse = function(err, data, file, cb) {
       data.forEach(function(row) {
         row.forEach(function(cell, col) {
           if (cell==="") {return;}
           var n;
           if (cell.charAt(cell.length-1)==="%") {
-            n = cell.replace(/[,%]/g,"")/100;
+            n = Math.round(cell.replace(/[,%]/g,"")*m)/(m*100);
           } else {
             n = cell.replace(/Ð/g,"-");
             n = n.replace(/[,$\s]/g,"")*1;
