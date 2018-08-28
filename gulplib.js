@@ -1,13 +1,13 @@
 /*globals require, console, Buffer, Promise*/
-module.exports = function() {
+module.exports = function(gulp) {
 
   var l = {};
   
-  var gulp, sass, uglify, watch, concat, notify, browserify, browserify_css,
+  var sass, uglify, watch, concat, notify, browserify, browserify_css,
     source, sourcemaps, buffer, watchify, stringify, fs, text_encoding,
     parser, git, exec, babelify;
 
-  l.gulp = gulp = require('gulp'),
+  l.gulp = gulp;
   l.sass = sass = require('gulp-sass'),
   l.uglify = uglify = require('gulp-uglify'),
   l.watch = watch = require('gulp-watch'),
@@ -318,5 +318,5 @@ module.exports = function() {
   
   return l;
   
-  };
+};
   
