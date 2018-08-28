@@ -3,38 +3,41 @@ module.exports = function() {
 
   var l = {};
   
-    l.gulp = gulp = require('gulp'),
-    l.util = util = require('gulp-util'),
-    l.sass = sass = require('gulp-sass'),
-    l.uglify = uglify = require('gulp-uglify'),
-    l.watch = watch = require('gulp-watch'),
-    l.concat = concat = require('gulp-concat'),
-    l.notify = notify = require('gulp-notify'),
-    l.browserify = browserify = require('browserify'),
-    l.browserify_css = browserify_css = require('browserify-css'),
-    l.source = source = require("vinyl-source-stream"),
-    l.sourcemaps = sourcemaps = require('gulp-sourcemaps'),
-    l.buffer = buffer = require('vinyl-buffer'),
-    l.watchify = watchify = require('watchify'),
-    l.stringify = stringify = require('stringify'),
-    l.fs = fs = require("fs"),
-    l.text_encoding = text_encoding = require("text-encoding"),
-    l.parser = parser = require("csv-parse"),
-    l.git = git = require("gulp-git"),
-    l.babelify = require("babelify"),
-    l.exec = exec = require('child_process').exec;
-      //pako = require("pako");
-  
-    var makeDirectory = l.makeDirectory = function(address, cb) {
-        fs.mkdir(address, function(e) {
-          if (e!==null) {
-            if (e.code!=="EEXIST") {
-              throw new Error(e);
-            }
-          }
-          cb();
-        });
+  var gulp, sass, uglify, watch, concat, notify, browserify, browserify_css,
+    source, sourcemaps, buffer, watchify, stringify, fs, text_encoding,
+    parser, git, exec, babelify;
+
+  l.gulp = gulp = require('gulp'),
+  l.sass = sass = require('gulp-sass'),
+  l.uglify = uglify = require('gulp-uglify'),
+  l.watch = watch = require('gulp-watch'),
+  l.concat = concat = require('gulp-concat'),
+  l.notify = notify = require('gulp-notify'),
+  l.browserify = browserify = require('browserify'),
+  l.browserify_css = browserify_css = require('browserify-css'),
+  l.source = source = require("vinyl-source-stream"),
+  l.sourcemaps = sourcemaps = require('gulp-sourcemaps'),
+  l.buffer = buffer = require('vinyl-buffer'),
+  l.watchify = watchify = require('watchify'),
+  l.stringify = stringify = require('stringify'),
+  l.fs = fs = require("fs"),
+  l.text_encoding = text_encoding = require("text-encoding"),
+  l.parser = parser = require("csv-parse"),
+  l.git = git = require("gulp-git"),
+  l.babelify = babelify = require("babelify"),
+  l.exec = exec = require('child_process').exec;
+    //pako = require("pako")*/
+
+  var makeDirectory = l.makeDirectory = function(address, cb) {
+    fs.mkdir(address, function(e) {
+      if (e!==null) {
+        if (e.code!=="EEXIST") {
+          throw new Error(e);
+        }
       }
+      cb();
+    });
+  }
   
   function swallowError(error) {
       console.log(error.toString());
