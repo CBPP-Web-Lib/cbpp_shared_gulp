@@ -7,7 +7,6 @@ module.exports = function(gulp) {
     source, sourcemaps, buffer, watchify, stringify, fs, text_encoding,
     parser, git, exec, babelify;
 
-  l.gulp = gulp;
   l.sass = sass = require('gulp-sass'),
   l.uglify = uglify = require('gulp-uglify'),
   l.watch = watch = require('gulp-watch'),
@@ -200,7 +199,6 @@ module.exports = function(gulp) {
   ];
   
   gulp.task('build-watch', ['sass', 'buildDirectory', 'server', 'preBuild'], function() {
-    console.log(l.watch_list);
     l.watch_list.forEach(function(d) {
       gulp.watch(d[0], d[1], d[2]);
     });
@@ -224,13 +222,19 @@ module.exports = function(gulp) {
         });
       });
   });
-  
+  var babelProcess, minProcess;
   function babelOutput(cb) {
-    exec("npx babel ./build/js/app.js -o ./build/js/app.js --source-maps inline", cb);
+    if (babelProcess) {
+      babelProcess.kill();
+    }
+    babelProcess = exec("npx babel ./build/js/app.js -o ./build/js/app.js --source-maps inline", function() {
+      babelProcess = null;
+      cb();
+    });
   }
   
   function minOutput(cb) {
-    exec("npx uglifyjs --compress --mangle -o ./build/js/app.js -- ./build/js/app.js", cb);
+    minProcess = exec("npx uglifyjs --compress --mangle -o ./build/js/app.js -- ./build/js/app.js", cb);
   }
   
   gulp.task('preBuild', function(cb) {
@@ -316,6 +320,8 @@ module.exports = function(gulp) {
   
   gulp.task('default', ['build']);
   
+  l.gulp = gulp;
+
   return l;
   
 };
