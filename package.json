@@ -5,7 +5,7 @@
   "main": "gulplib_bundled.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build":"build.js"
+    "build": "build.js"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,9 @@
     "gulp-watch": "^5.0.1",
     "ncp": "^2.0.0",
     "pump": "^3.0.0",
+    "rollup": "^0.65.0",
+    "rollup-plugin-commonjs": "^9.1.6",
+    "rollup-plugin-node-resolve": "^3.3.0",
     "sassr": "^0.1.2",
     "stringify": "^5.2.0",
     "text-encoding": "^0.6.4",
