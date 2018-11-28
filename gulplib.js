@@ -87,6 +87,9 @@ module.exports = function(gulp) {
       if (typeof(cb)==="function") {cb();}
     }
   };
+
+  l.scss_additional_target_list = [];
+  
   
   // sass task
   gulp.task('sass', ['cbpp_shared_lib'], function (cb) {
@@ -99,10 +102,17 @@ module.exports = function(gulp) {
         .on("end", resolve);
       });
     };
-    Promise.all([
+    var list = [
       handleStream(['./**/*.scss', '!./node_modules/**/*.scss']),
       handleStream(['./node_modules/cbpp*/**/*.scss'])
-    ]).then(function() {
+    ];
+    
+    for (var i = 0, ii = l.scss_additional_target_list.length; i<ii; i++) {
+      list.push(
+        handleStream(l.scss_additional_target_list[i])
+      );
+    }
+    Promise.all(list).then(function() {
       if (typeof(cb)==="function") {
         cb();
       }
