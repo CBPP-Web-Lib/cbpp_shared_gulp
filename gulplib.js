@@ -177,6 +177,10 @@ module.exports = function(gulp) {
   
   gulp.task("server", function(cb) {
     var http = require('http');
+    var serverPort = 8000;
+    if (typeof(l.serverPort)!=="undefined") {
+      serverPort = l.serverPort;
+    }
     var fs = require("fs");
     var server = http.createServer(function(req, res) {
       try {
@@ -198,7 +202,7 @@ module.exports = function(gulp) {
     server.on('clientError', function (err, socket) {
       socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
     });
-    server.listen(8000);
+    server.listen(serverPort);
     cb();
   });
   
