@@ -184,7 +184,14 @@ module.exports = function(gulp) {
     var fs = require("fs");
     var server = http.createServer(function(req, res) {
       try {
-        fs.readFile("./build" + req.url.split("?")[0], function (err, file) {
+        var file = "./build" + req.url.split("?")[0];
+        file = file.split(".");
+        var ext = file[file.length-1];
+        file = file.join(".");
+        if (ext==="svg") {
+          res.setHeader("Content-Type","image/svg+xml");
+        }
+        fs.readFile(file, function (err, file) {
           if (err) {
             res.end('HTTP/1.1 400 Bad Request\r\n\r\n');
             return;
