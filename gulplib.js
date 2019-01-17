@@ -248,7 +248,7 @@ module.exports = function(gulp) {
     if (babelProcess) {
       babelProcess.kill();
     }
-    babelProcess = exec("npx babel ./build/js/app.js -o ./build/js/app.js --source-maps inline", function() {
+    babelProcess = exec("npx babel ./build/js/app.js -o ./build/js/app.js --source-maps", function(err, out) {
       if (err) {console.log(err);}
       if (out) {console.log(out);}
       babelProcess = null;
