@@ -249,13 +249,19 @@ module.exports = function(gulp) {
       babelProcess.kill();
     }
     babelProcess = exec("npx babel ./build/js/app.js -o ./build/js/app.js --source-maps inline", function() {
+      if (err) {console.log(err);}
+      if (out) {console.log(out);}
       babelProcess = null;
       cb();
     });
   }
   
   function minOutput(cb) {
-    minProcess = exec("npx uglifyjs --compress --mangle -o ./build/js/app.js -- ./build/js/app.js", cb);
+    minProcess = exec("npx uglifyjs --compress --mangle -o ./build/js/app.js -- ./build/js/app.js", function(err, out) {
+      if (err) {console.log(err);}
+      if (out) {console.log(out);}
+      cb();
+    });
   }
   
   gulp.task('preBuild', function(cb) {
