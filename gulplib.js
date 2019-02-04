@@ -90,6 +90,10 @@ module.exports = function(gulp) {
 
   l.scss_additional_target_list = [];
   
+  gulp.task("cbpp_shared_lib", function(cb) {
+    console.log("No shared CBPP libraries specified in gulpfile");
+    cb();
+  });
   
   // sass task
   gulp.task('sass', gulp.series('cbpp_shared_lib', function (cb) {
@@ -212,12 +216,22 @@ module.exports = function(gulp) {
     server.listen(serverPort);
     cb();
   });
+
+  gulp.task('data', gulp.series('intermediate', function(taskDone) {
+    l.dataHandler(function(allJSON) {
+      l.fs.writeFile("./intermediate/data.json", JSON.stringify({data:allJSON}), taskDone);
+    });
+  }));
   
   l.watch_list = [
-    [['./**/*.scss'],{usePolling: true},['sass']],
-    [['./**/*.csv'],{usePolling: true},['data']],
-    [['./index.*'],{usePolling: true},['copyIndex']]
+    [['./**/*.scss'],{usePolling: true},gulp.series('sass')],
+    [['./**/*.csv'],{usePolling: true},gulp.series('data')],
+    [['./index.*'],{usePolling: true},gulp.series('copyIndex')]
   ];
+
+  gulp.task('preBuild', function(cb) {
+    cb();
+  });
   
   gulp.task('build-watch', gulp.series(gulp.parallel('sass', 'buildDirectory', 'server', 'preBuild'), function() {
     l.watch_list.forEach(function(d) {
@@ -265,9 +279,7 @@ module.exports = function(gulp) {
     });
   }
   
-  gulp.task('preBuild', function(cb) {
-    cb();
-  });
+  
   
   gulp.task('minify', function() {
     minOutput(function() {
@@ -336,17 +348,11 @@ module.exports = function(gulp) {
     }
   };
   
-  gulp.task('data', gulp.series('intermediate', function(taskDone) {
-    l.dataHandler(function(allJSON) {
-      l.fs.writeFile("./intermediate/data.json", JSON.stringify({data:allJSON}), taskDone);
-    });
-  }));
   
-  gulp.task("cbpp_shared_lib", function() {
-    console.log("No shared CBPP libraries specified in gulpfile");
-  });
   
-  gulp.task('default', gulp.series('build'));
+ 
+  
+  gulp.task('default', gulp.series('build-watch'));
   
   l.gulp = gulp;
 
