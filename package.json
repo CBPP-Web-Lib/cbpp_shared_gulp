@@ -12,10 +12,10 @@
     "url": "git+https://github.com/CenterOnBudget/cbpp_shared_gulp.git"
   },
   "dependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.7.0",
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "@babel/plugin-transform-runtime": "^7.2.0",
+    "@babel/preset-env": "^7.3.1",
     "babelify": "^10.0.0",
     "brfs": "^2.0.1",
     "browserify": "^16.2.2",
@@ -38,7 +38,6 @@
     "gulp-watch": "^5.0.1",
     "ncp": "^2.0.0",
     "pump": "^3.0.0",
-    "sassr": "^0.1.2",
     "stringify": "^5.2.0",
     "text-encoding": "^0.7.0",
     "uglify-js": "^3.4.6",
