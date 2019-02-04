@@ -92,7 +92,7 @@ module.exports = function(gulp) {
   
   
   // sass task
-  gulp.task('sass', ['cbpp_shared_lib'], function (cb) {
+  gulp.task('sass', gulp.series('cbpp_shared_lib', function (cb) {
     var handleStream = function(src) {
       return new Promise(function(resolve, reject){
         gulp.src(src, {base:"./"})
@@ -117,7 +117,7 @@ module.exports = function(gulp) {
         cb();
       }
     });
-  });
+  }));
   
   function doBrowserify(entries) {
     copyIndex();
@@ -219,7 +219,7 @@ module.exports = function(gulp) {
     [['./index.*'],{usePolling: true},['copyIndex']]
   ];
   
-  gulp.task('build-watch', ['sass', 'buildDirectory', 'server', 'preBuild'], function() {
+  gulp.task('build-watch', gulp.series(gulp.parallel('sass', 'buildDirectory', 'server', 'preBuild'), function() {
     l.watch_list.forEach(function(d) {
       gulp.watch(d[0], d[1], d[2]);
     });
@@ -242,7 +242,8 @@ module.exports = function(gulp) {
           console.log("babeled");
         });
       });
-  });
+  }));
+
   var babelProcess, minProcess;
   function babelOutput(cb) {
     if (babelProcess) {
@@ -335,17 +336,17 @@ module.exports = function(gulp) {
     }
   };
   
-  gulp.task('data', ['intermediate'], function(taskDone) {
+  gulp.task('data', gulp.series('intermediate', function(taskDone) {
     l.dataHandler(function(allJSON) {
       l.fs.writeFile("./intermediate/data.json", JSON.stringify({data:allJSON}), taskDone);
     });
-  });
+  }));
   
   gulp.task("cbpp_shared_lib", function() {
     console.log("No shared CBPP libraries specified in gulpfile");
   });
   
-  gulp.task('default', ['build']);
+  gulp.task('default', gulp.series('build'));
   
   l.gulp = gulp;
 
