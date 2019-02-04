@@ -12,6 +12,8 @@ module.exports = function(gulp) {
   l.watch = watch = require('gulp-watch'),
   l.concat = concat = require('gulp-concat'),
   l.notify = notify = require('gulp-notify'),
+  l.replace = replace = require("gulp-replace"),
+  l.rename = rename = require("gulp-rename"),
   l.browserify = browserify = require('browserify'),
   l.browserify_css = browserify_css = require('browserify-css'),
   l.source = source = require("vinyl-source-stream"),
@@ -44,7 +46,14 @@ module.exports = function(gulp) {
   }
   
   function copyIndex() {
-    gulp.src('./index.*').pipe(gulp.dest('./build/'));
+    gulp.src('./index.*')
+      .pipe(l.replace("js/app.js","js/app.min.js"))
+      .pipe(gulp.dest("./build/"))
+      .pipe(l.replace("js/app.min.js","js/app.js"))
+      .pipe(l.rename(function(path) {
+        path.basename += "_debug";
+      }))
+      .pipe(gulp.dest("./build/"));
   }
   
   l.get_cbpp_shared_libs = function(arr, cb) {
@@ -243,19 +252,11 @@ module.exports = function(gulp) {
     });
     b.on('update', function() {
       console.log("file change detected");
-      b.doBundle().writeBundle(function() {
-        babelOutput(function () {
-          console.log("babeled");
-        });
-      });
+      b.doBundle().writeBundle();
     });
     return b
       .doBundle()
-      .writeBundle(function() {
-        babelOutput(function () {
-          console.log("babeled");
-        });
-      });
+      .writeBundle();
   }));
 
   var babelProcess, minProcess;
@@ -263,7 +264,7 @@ module.exports = function(gulp) {
     if (babelProcess) {
       babelProcess.kill();
     }
-    babelProcess = exec("npx babel ./build/js/app.js -o ./build/js/app.js --source-maps", function(err, out) {
+    babelProcess = exec("npx babel ./build/js/app.js -o ./build/js/app.babeled.js --source-maps", function(err, out) {
       if (err) {console.log(err);}
       if (out) {console.log(out);}
       babelProcess = null;
@@ -272,7 +273,7 @@ module.exports = function(gulp) {
   }
   
   function minOutput(cb) {
-    minProcess = exec("npx uglifyjs --compress --mangle -o ./build/js/app.js -- ./build/js/app.js", function(err, out) {
+    minProcess = exec("npx uglifyjs --compress --mangle -o ./build/js/app.min.js -- ./build/js/app.babeled.js", function(err, out) {
       if (err) {console.log(err);}
       if (out) {console.log(out);}
       cb();
@@ -281,9 +282,13 @@ module.exports = function(gulp) {
   
   
   
-  gulp.task('minify', function() {
-    minOutput(function() {
-      console.log("minified");
+  gulp.task('minify', function(cb) {
+    babelOutput(function() {
+      console.log("babeled");
+      minOutput(function() {
+        console.log("minified");
+        cb();
+      });
     });
   });
   

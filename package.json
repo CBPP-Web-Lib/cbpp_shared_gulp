@@ -31,6 +31,8 @@
     "gulp-git": "^2.5.1",
     "gulp-ignore": "^2.0.2",
     "gulp-notify": "^3.0.0",
+    "gulp-rename": "^1.4.0",
+    "gulp-replace": "^1.0.0",
     "gulp-ruby-sass": "^3.0.0",
     "gulp-sass": "^4.0.1",
     "gulp-sourcemaps": "^2.6.0",
