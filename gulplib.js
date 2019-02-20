@@ -192,7 +192,10 @@ module.exports = function(gulp) {
     var http = require('http');
     var fs = require("fs");
     var exec = require("child_process").exec;
-    
+    var serverPort = 8000;
+    if (typeof(l.serverPort)!=="undefined") {
+      serverPort = l.serverPort;
+    }
     var server = http.createServer(function(req, res) {
       function parse_php_res(f) {
         var offset;
@@ -222,10 +225,7 @@ module.exports = function(gulp) {
         result.body = body;
         return result;
       }
-      var serverPort = 8000;
-      if (typeof(l.serverPort)!=="undefined") {
-        serverPort = l.serverPort;
-      }
+      
       try {
         var headers = {
           'max-age':86400,
