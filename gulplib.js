@@ -3,31 +3,16 @@ module.exports = function(gulp) {
 
   var l = {};
   
-  var sass, uglify, watch, concat, notify, browserify, browserify_css,
-    source, sourcemaps, buffer, watchify, stringify, fs, text_encoding,
-    parser, git, exec, babelify;
+  var fs, text_encoding, parser, exec, path;
 
-  l.sass = sass = require('gulp-sass'),
-  l.uglify = uglify = require('gulp-uglify'),
-  l.watch = watch = require('gulp-watch'),
-  l.concat = concat = require('gulp-concat'),
-  l.notify = notify = require('gulp-notify'),
   l.replace = replace = require("gulp-replace"),
   l.rename = rename = require("gulp-rename"),
-  l.browserify = browserify = require('browserify'),
-  l.browserify_css = browserify_css = require('browserify-css'),
-  l.source = source = require("vinyl-source-stream"),
-  l.sourcemaps = sourcemaps = require('gulp-sourcemaps'),
-  l.buffer = buffer = require('vinyl-buffer'),
-  l.watchify = watchify = require('watchify'),
-  l.stringify = stringify = require('stringify'),
+  l.webpack = webpack =require("webpack"),
+  l.path = path = require("path"),
   l.fs = fs = require("fs"),
-  l.text_encoding = text_encoding = require("text-encoding"),
   l.parser = parser = require("csv-parse"),
-  l.git = git = require("gulp-git"),
-  l.babelify = babelify = require("babelify"),
+  l.webpack_config = require("./webpack_config.js"),
   l.exec = exec = require('child_process').exec;
-    //pako = require("pako")*/
 
   var makeDirectory = l.makeDirectory = function(address, cb) {
     fs.mkdir(address, function(e) {
@@ -38,12 +23,7 @@ module.exports = function(gulp) {
       }
       cb();
     });
-  }
-  
-  function swallowError(error) {
-      console.log(error.toString());
-      this.emit('end');
-  }
+  };
   
   function copyIndex() {
     gulp.src('./index.*')
@@ -56,121 +36,23 @@ module.exports = function(gulp) {
       .pipe(gulp.dest("./build/"));
   }
   
-  l.get_cbpp_shared_libs = function(arr, cb) {
-    if (typeof(arr)==="string") {
-      l.get_cbpp_shared_lib(arr, cb);
-    } else {
-      var p = [];
-      arr.forEach(function(name) {
-        p.push(new Promise(function(resolve, reject) {
-          try {
-            l.get_cbpp_shared_lib(name, resolve);
-          } catch (ex) {
-            console.log(ex);
-            reject(ex);
-          }
-        }));
-      });
-      Promise.all(p).then(function() {
-        if (typeof(cb)==="function") {
-          cb();
-        }
-      });
-    }
-  };
-  
-  l.get_cbpp_shared_lib = function(name, cb) {
-    if (!fs.existsSync("./" + name)) {
-      git.clone("https://github.com/CenterOnBudget/" + name, {args: "--depth=1"}, function(err) {
-        if (err) {
-          throw err;
-        }
-        exec('npm install', {cwd: process.cwd() + "/" + name}, function(err) {
-          if (err) {
-            console.log(err);
-          }
-          if (typeof(cb)==="function") {cb();}
-        });
-      });
-    } else {
-      if (typeof(cb)==="function") {cb();}
-    }
-  };
-
-  l.scss_additional_target_list = [];
-  
-  gulp.task("cbpp_shared_lib", function(cb) {
-    console.log("No shared CBPP libraries specified in gulpfile");
-    cb();
-  });
-  
-  // sass task
-  gulp.task('sass', gulp.series('cbpp_shared_lib', function (cb) {
-    var handleStream = function(src) {
-      return new Promise(function(resolve, reject){
-        gulp.src(src, {base:"./"})
-        .pipe(sass())
-        .on('error', swallowError)
-        .pipe(gulp.dest('.'))
-        .on("end", resolve);
-      });
-    };
-    var list = [
-      handleStream(['./**/*.scss', '!./node_modules/**/*.scss']),
-      handleStream(['./node_modules/cbpp*/**/*.scss'])
-    ];
-    
-    for (var i = 0, ii = l.scss_additional_target_list.length; i<ii; i++) {
-      list.push(
-        handleStream(l.scss_additional_target_list[i])
-      );
-    }
-    Promise.all(list).then(function() {
-      if (typeof(cb)==="function") {
-        cb();
-      }
-    });
-  }));
-  
-  function doBrowserify(entries) {
+  function doWebpack(entry, cb) {
     copyIndex();
-    var b = browserify({
-        entries: entries,
-        debug: true,
-        cache: {},
-        packageCache: {}
-    });
-    b.transform(browserify_css, {global:true});
-    //b.transform(l.babelify, {presets:["env"]});
-    b.transform(stringify, {
-        appliesTo: {includeExtensions: ['.txt','.csv','.html']}
-    });
-    b.doBundle = function() {
-      var r = this.bundle()
-        .on('error', swallowError)
-        .pipe(source('app.js'))
-        .pipe(buffer());
-  
-      r.doUglify = function() {
-        this.pipe(sourcemaps.init({loadMaps: true}))
-          // Add transformation tasks to the pipeline here.
-          .pipe(uglify())
-          .pipe(sourcemaps.write('./'));
-        return this;
-      };
-  
-      r.writeBundle = function(cb) {
-        this.pipe(gulp.dest('./build/js')).on("end", function() {
-          console.log("built");
-          if (typeof(cb)==="function") {
-            cb();
-          }
-        });
-        return this;
-      };
-      return r;
+    var dest = path.resolve("./build/js");
+    var config = l.webpack_config;
+    config.entry = entry;
+    config.mode = "development";
+    config.output = {
+      path: dest,
+      filename: "app.js"
     };
-    return b;
+    webpack(config, function(err, stats) {
+      if (err) {console.log(err);}
+      if (stats.compilation.errors.length > 0) {
+        console.log(stats.compilation.errors);
+      }
+      cb();
+    });
   }
   
   
@@ -279,31 +161,27 @@ module.exports = function(gulp) {
     });
   }));
   
+  gulp.task("build", function(cb) {
+    doWebpack("./app.js", cb);
+  });
+
   l.watch_list = [
-    [['./**/*.scss'],{usePolling: true},gulp.series('sass')],
-    [['./**/*.csv'],{usePolling: true},gulp.series('data')],
-    [['./index.*'],{usePolling: true},gulp.series('copyIndex')]
+    [['./**/*.csv'],{usePolling: false},gulp.series('data')],
+    [['./index.*'],{usePolling: false},gulp.series('copyIndex')],
+    [['./app.js', './**/*.scss'],{usePolling:false},gulp.series("build")]
   ];
 
   gulp.task('preBuild', function(cb) {
     cb();
   });
-  
-  gulp.task('build-watch', gulp.series(gulp.parallel('sass', 'buildDirectory', 'server', 'preBuild'), function() {
+
+  gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build", function(cb) {
+    
     l.watch_list.forEach(function(d) {
       gulp.watch(d[0], d[1], d[2]);
     });
-    var b = doBrowserify("./app.js");
-    b.plugin(watchify, {
-      poll: true
-    });
-    b.on('update', function() {
-      console.log("file change detected");
-      b.doBundle().writeBundle();
-    });
-    return b
-      .doBundle()
-      .writeBundle();
+    cb();
+    
   }));
 
   var babelProcess, minProcess;
@@ -330,13 +208,32 @@ module.exports = function(gulp) {
   
   
   gulp.task('minify', function(cb) {
-    babelOutput(function() {
-      console.log("babeled");
-      minOutput(function() {
-        console.log("minified");
-        cb();
+    var dest = path.resolve("./build/js"); 
+    var entry = "./app.js";
+    var config = l.webpack_config;
+    config.entry = entry;
+    config.mode = "production";
+    config.output = {
+      path: dest,
+      filename: "app.js"
+    };
+    var b = webpack(config, function(err, stats) {
+      if (err) {
+        console.log(err);
+      }
+      if (stats.compilation.errors.length > 0) {
+        console.log(stats.compilation.errors);
+        return;
+      }
+      babelOutput(function() {
+        console.log("babeled");
+        minOutput(function() {
+          console.log("minified");
+          cb();
+        });
       });
     });
+    
   });
   
   l.dataEncoding = "windows-1252";
