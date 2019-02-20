@@ -1,4 +1,8 @@
 module.exports = {
+  watch:true,
+  watchOptions: {
+    ignored: /(.*?)node_modules\/((?!cbpp_).*)/,
+  },
   module: {
     rules: [
       { test: /\.css$/, use: ['style-loader', 'css-loader']},

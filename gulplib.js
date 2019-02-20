@@ -46,13 +46,22 @@ module.exports = function(gulp) {
       path: dest,
       filename: "app.js"
     };
-    webpack(config, function(err, stats) {
+    
+    
+    var compiler = webpack(config);
+
+    compiler.watch(config.watchOptions, function(err, stats) {
       if (err) {console.log(err);}
       if (stats.compilation.errors.length > 0) {
         console.log(stats.compilation.errors);
       }
       cb();
     });
+
+    compiler.hooks.watchRun.tap("AlertChange", function() {
+      console.log("change detected");
+    });
+
   }
   
   
@@ -162,25 +171,29 @@ module.exports = function(gulp) {
   }));
   
   gulp.task("build", function(cb) {
-    doWebpack("./app.js", cb);
+    doWebpack("./app.js", function() {
+      console.log("built");
+      cb();
+    });
+
   });
 
   l.watch_list = [
     [['./**/*.csv'],{usePolling: false},gulp.series('data')],
     [['./index.*'],{usePolling: false},gulp.series('copyIndex')],
-    [['./app.js', './**/*.scss'],{usePolling:false},gulp.series("build")]
+    //[['./app.js', './**/*.scss'],{usePolling:false},gulp.series("build")]
   ];
 
   gulp.task('preBuild', function(cb) {
     cb();
   });
 
-  gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build", function(cb) {
+  gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build", function() {
     
     l.watch_list.forEach(function(d) {
       gulp.watch(d[0], d[1], d[2]);
     });
-    cb();
+    
     
   }));
 
