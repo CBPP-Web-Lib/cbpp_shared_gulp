@@ -1,18 +1,15 @@
-/*globals require, console, Buffer, Promise*/
+/*globals require, console, Buffer, Promise, setTimeout, clearTimeout*/
 module.exports = function(gulp) {
-
   var l = {};
-  
-  var fs, text_encoding, parser, exec, path;
 
-  l.replace = replace = require("gulp-replace"),
-  l.rename = rename = require("gulp-rename"),
-  l.webpack = webpack =require("webpack"),
-  l.path = path = require("path"),
-  l.fs = fs = require("fs"),
-  l.parser = parser = require("csv-parse"),
-  l.webpack_config = require("./webpack_config.js"),
-  l.exec = exec = require('child_process').exec;
+  var replace = l.replace = require("gulp-replace"),
+    rename = l.rename = require("gulp-rename"),
+    webpack = l.webpack = require("webpack"),
+    path = l.path = require("path"),
+    fs = l.fs = require("fs"),
+    parser = l.parser = require("csv-parse"),
+    webpack_config = l.webpack_config = require("./webpack_config.js"),
+    exec = l.exec = require('child_process').exec;
 
   var makeDirectory = l.makeDirectory = function(address, cb) {
     fs.mkdir(address, function(e) {
@@ -36,35 +33,89 @@ module.exports = function(gulp) {
       .pipe(gulp.dest("./build/"));
   }
   
-  function doWebpack(entry, cb) {
+  l.clone = function(obj) {
+    var r = {};
+    for (var prop in obj) {
+      if (obj.hasOwnProperty(prop)) {
+        if (Array.isArray(obj[prop])) {
+          r[prop] = [];
+          for (var i = 0, ii = obj[prop].length; i<ii; i++) {
+            r[prop][i] = obj[prop][i];
+          }
+        } else if (Object.prototype.toString.call(obj[prop]) == '[object RegExp]') {
+          r[prop] = obj[prop];
+        } else if (typeof(obj[prop])==="object") {
+          r[prop] = l.clone(obj[prop]);
+        } else {
+          r[prop] = obj[prop];
+        }
+      }
+    }
+    return r;
+  }
+
+  function doWebpack(entry, filename, config_transform, i) {
     copyIndex();
     var dest = path.resolve("./build/js");
-    var config = l.webpack_config;
+    var config = config_transform(l.clone(l.webpack_config));
     config.entry = entry;
     config.mode = "development";
     config.output = {
       path: dest,
-      filename: "app.js"
+      filename: filename
     };
-    
-    
-    var compiler = webpack(config);
-
-    compiler.watch(config.watchOptions, function(err, stats) {
+    var compiler_dev = webpack(config);
+    var prod_config = l.clone(config);
+    var prod_filename = filename.replace(".js","") + ".min" + ".js";
+    prod_config.mode = "production";
+    prod_config.output = {
+      path: dest,
+      filename: prod_filename
+    };
+    prod_config.module.rules.push({
+      test: /\.js$/, 
+      loader: "babel-loader", 
+      enforce: "pre",
+      options: require("./babel_config.json")
+    });
+    var compiler_prod = webpack(prod_config);
+    var prod_is_running = false;
+    var pending_comp = false;
+    var delay_timer;
+    var prod_callback = function(err, stats) {
+      prod_is_running = false;
       if (err) {console.log(err);}
       if (stats.compilation.errors.length > 0) {
         console.log(stats.compilation.errors);
       }
-      cb();
+      console.log("built prod bundle: " + prod_filename);
+    };
+    compiler_dev.watch(config.watchOptions, function(err, stats) {
+      if (err) {console.log(err);}
+      if (stats.compilation.errors.length > 0) {
+        console.log(stats.compilation.errors);
+      }
+      console.log("built dev bundle:" + filename);
+      if (!prod_is_running) {
+        prod_is_running = true;
+        compiler_prod.run(prod_callback);
+      } else {
+        pending_comp = true;
+        compiler_prod.hooks.afterCompile.tap("WaitUntilDone", function() {
+          if (!pending_comp) {return;}
+          clearTimeout(delay_timer);
+          delay_timer = setTimeout(function() {
+            prod_is_running = true;
+            pending_comp = false;
+            compiler_prod.run(prod_callback);
+          }, 500);
+        });
+      }
     });
-
-    compiler.hooks.watchRun.tap("AlertChange", function() {
-      console.log("change detected");
+    compiler_dev.hooks.watchRun.tap("AlertChange", function() {
+      if (i===0) {console.log("change detected");}
     });
-
   }
-  
-  
   
   gulp.task('buildDirectory', function(cb) {
     makeDirectory("./build", cb);
@@ -169,19 +220,24 @@ module.exports = function(gulp) {
       l.fs.writeFile("./intermediate/data.json", JSON.stringify({data:allJSON}), taskDone);
     });
   }));
+
+  l.build_list = [
+    {
+      dest:"./app.js",
+      config_transform: function(r) {return r;}
+    }
+  ];
   
   gulp.task("build", function(cb) {
-    doWebpack("./app.js", function() {
-      console.log("built");
-      cb();
+    l.build_list.forEach(function(build, i) {
+      doWebpack("./app.js", build.dest, build.config_transform, i);
     });
-
+    cb();
   });
 
   l.watch_list = [
     [['./**/*.csv'],{usePolling: false},gulp.series('data')],
-    [['./index.*'],{usePolling: false},gulp.series('copyIndex')],
-    //[['./app.js', './**/*.scss'],{usePolling:false},gulp.series("build")]
+    [['./index.*'],{usePolling: false},gulp.series('copyIndex')]
   ];
 
   gulp.task('preBuild', function(cb) {
@@ -189,66 +245,11 @@ module.exports = function(gulp) {
   });
 
   gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build", function() {
-    
     l.watch_list.forEach(function(d) {
       gulp.watch(d[0], d[1], d[2]);
     });
-    
-    
   }));
 
-  var babelProcess, minProcess;
-  function babelOutput(cb) {
-    if (babelProcess) {
-      babelProcess.kill();
-    }
-    babelProcess = exec("npx babel ./build/js/app.js -o ./build/js/app.babeled.js --source-maps", function(err, out) {
-      if (err) {console.log(err);}
-      if (out) {console.log(out);}
-      babelProcess = null;
-      cb();
-    });
-  }
-  
-  function minOutput(cb) {
-    minProcess = exec("npx uglifyjs --compress --mangle -o ./build/js/app.min.js -- ./build/js/app.babeled.js", function(err, out) {
-      if (err) {console.log(err);}
-      if (out) {console.log(out);}
-      cb();
-    });
-  }
-  
-  
-  
-  gulp.task('minify', function(cb) {
-    var dest = path.resolve("./build/js"); 
-    var entry = "./app.js";
-    var config = l.webpack_config;
-    config.entry = entry;
-    config.mode = "production";
-    config.output = {
-      path: dest,
-      filename: "app.js"
-    };
-    var b = webpack(config, function(err, stats) {
-      if (err) {
-        console.log(err);
-      }
-      if (stats.compilation.errors.length > 0) {
-        console.log(stats.compilation.errors);
-        return;
-      }
-      babelOutput(function() {
-        console.log("babeled");
-        minOutput(function() {
-          console.log("minified");
-          cb();
-        });
-      });
-    });
-    
-  });
-  
   l.dataEncoding = "windows-1252";
   l.percentRounding = 2;
   l.dataHandler = function(f_cb) {
@@ -310,15 +311,8 @@ module.exports = function(gulp) {
     }
   };
   
-  
-  
- 
-  
   gulp.task('default', gulp.series('build-watch'));
-  
   l.gulp = gulp;
-
   return l;
-  
 };
   
