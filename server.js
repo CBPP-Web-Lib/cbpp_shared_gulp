@@ -5,13 +5,11 @@ var exec = require("child_process").exec;
 
 process.on("message", function(m) {
   if (typeof(m)==="object") {
-    if (m.serverPort) {
-      run_server(m.serverPort);
-    }
+    run_server(m.serverPort, m.basedir);
   }
 });
 
-function run_server(port) {
+function run_server(port, basedir) {
   try {
     console.log("starting http server on port " + port);
     var serverPort = port;
@@ -54,10 +52,22 @@ function run_server(port) {
           'Access-Control-Allow-Methods':'POST, GET, OPTIONS'
         };
         var file = req.url.split("?")[0];
+        if (fs.lstatSync("./build" + file).isDirectory()) {
+          if (file.slice(-1)!=="/") {
+            res.writeHead(301, {'Location': file + "/"});
+            res.end();
+            return;
+          }
+          file += "/index.php";
+          if (!fs.existsSync("./build" + file)) {
+            file = file.replace("index.php","index.html");
+          }
+        }
         var ext = file.split(".")[file.split(".").length-1];
-        
         if (ext==="php") {
-          var command = "php-cgi \"" + __dirname + "/build" + file + "\" " + req.url.split("?")[1].split("&").join(" ");
+          var command = "php-cgi \"" + basedir + "/build" + file + "\" ";
+          var url_arr = req.url.split("?");
+          if (url_arr[1]) {command += url_arr[1].split("&").join(" ");}
           exec(command, {encoding:"Buffer"}, function(err, f) {
             var parsed = parse_php_res(f);
             res.writeHead(200, parsed.headers);
@@ -82,6 +92,7 @@ function run_server(port) {
           });
         }
       } catch (ex) {
+        console.log(ex);
         res.end('HTTP/1.1 400 Bad Request\r\n\r\n');
       }
     });

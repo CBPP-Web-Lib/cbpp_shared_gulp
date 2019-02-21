@@ -12,7 +12,10 @@ module.exports = function(gulp) {
     child_process = l.child_process = require('child_process'),
     server_process,
     fork = l.fork = child_process.fork,
-    exec = l.exec = child_process.exec;
+    exec = l.exec = child_process.exec,
+    text_encoding = l.text_encoding = require("text-encoding"),
+    request = l.request = require("request"),
+    decompress = l.decompress = require("gulp-decompress");
 
   var makeDirectory = l.makeDirectory = function(address, cb) {
     fs.mkdir(address, function(e) {
@@ -55,7 +58,7 @@ module.exports = function(gulp) {
       }
     }
     return r;
-  }
+  };
 
   function doWebpack(entry, filename, config_transform, i) {
     copyIndex();
@@ -132,9 +135,11 @@ module.exports = function(gulp) {
     copyIndex();
     cb();
   });
-  
+
   gulp.task("server", function(cb) {
     var command = __dirname + "/server.js";
+    var basedir = process.cwd();
+    console.log(basedir);
     var serverPort = 8000;
     if (l.serverPort) {
       serverPort = l.serverPort;
@@ -143,9 +148,16 @@ module.exports = function(gulp) {
     server_process.on("message", function(m) {
       console.log("Message from server: ", m);
       if (m==="ready") {
-        server_process.send({serverPort: + serverPort});
+        server_process.send({serverPort: serverPort, basedir: basedir});
       }
     });
+    if (l.database) {
+      var database_process = exec(l.database.start);
+      process.on("SIGINT", function() {
+        exec(l.database.stop);
+        process.exit();
+      });
+    }
     cb(); 
   });
 
