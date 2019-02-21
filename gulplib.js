@@ -9,7 +9,10 @@ module.exports = function(gulp) {
     fs = l.fs = require("fs"),
     parser = l.parser = require("csv-parse"),
     webpack_config = l.webpack_config = require("./webpack_config.js"),
-    exec = l.exec = require('child_process').exec;
+    child_process = l.child_process = require('child_process'),
+    server_process,
+    fork = l.fork = child_process.fork,
+    exec = l.exec = child_process.exec;
 
   var makeDirectory = l.makeDirectory = function(address, cb) {
     fs.mkdir(address, function(e) {
@@ -131,87 +134,18 @@ module.exports = function(gulp) {
   });
   
   gulp.task("server", function(cb) {
-    var http = require('http');
-    var fs = require("fs");
-    var exec = require("child_process").exec;
+    var command = __dirname + "/server.js";
     var serverPort = 8000;
-    if (typeof(l.serverPort)!=="undefined") {
+    if (l.serverPort) {
       serverPort = l.serverPort;
     }
-    var server = http.createServer(function(req, res) {
-      function parse_php_res(f) {
-        var offset;
-        for (var i = 0, ii = f.length; i<ii; i++) {
-          //utf8 double line break
-          if (f[i]===13 && f[i+1]===10 && f[i+2]==13 && f[i+3]===10) {
-            offset = i;
-          }
-        }
-        var headers = [];
-        for (i = 0; i<offset;i++) {
-          headers.push(f[i]);
-        }
-        var body = [];
-        for (i = offset+4, ii = f.length; i<ii; i++) {
-          body.push(f[i]);
-        }
-        headers = Buffer.from(headers).toString("utf8").split("\r\n");
-        body = Buffer.from(body);
-        var headersObj = {};
-        headers.forEach(function(header) {
-          header = header.split(":");
-          headersObj[header[0]] = header[1];
-        });
-        var result = {};
-        result.headers = headersObj;
-        result.body = body;
-        return result;
-      }
-      
-      try {
-        var headers = {
-          'max-age':86400,
-          'Access-Control-Allow-Origin':"*",
-          'Vary':"Access-Control-Allow-Origin",
-          'Access-Control-Allow-Headers':'referrer, range, accept-encoding, x-requested-with',
-          'Access-Control-Allow-Methods':'POST, GET, OPTIONS'
-        };
-        var file = req.url.split("?")[0];
-        var ext = file.split(".")[file.split(".").length-1];
-        
-        if (ext==="php") {
-          var command = "php-cgi \"" + __dirname + "/build" + file + "\" " + req.url.split("?")[1].split("&").join(" ");
-          exec(command, {encoding:"Buffer"}, function(err, f) {
-            var parsed = parse_php_res(f);
-            res.writeHead(200, parsed.headers);
-            res.write(parsed.body);
-            res.end();
-          });
-        } else {
-          if (ext==="svg") {
-            res.setHeader("Content-Type","image/svg+xml");
-          }
-          fs.readFile("./build" + file, function (err, file) {
-            if (err) {
-              res.end('HTTP/1.1 400 Bad Request\r\n\r\n');
-              return;
-            }
-            if (ext === "json") {
-              headers['Content-Type'] = 'application/json';
-            }
-            res.writeHead(200, headers);
-            res.write(file);
-            res.end();
-          });
-        }
-      } catch (ex) {
-        res.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+    server_process = fork(command);
+    server_process.on("message", function(m) {
+      console.log("Message from server: ", m);
+      if (m==="ready") {
+        server_process.send({serverPort: + serverPort});
       }
     });
-    server.on('clientError', function (err, socket) {
-      socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
-    });
-    server.listen(serverPort);
     cb(); 
   });
 
