@@ -140,7 +140,12 @@ module.exports = function(gulp) {
   gulp.task("server", function(cb) {
     var command = __dirname + "/server.js";
     var basedir = process.cwd();
-    console.log(basedir);
+    l.stop = function() {
+      if (typeof(l.serverShutdownCb)==="function") {
+        l.serverShutdownCb();
+      }
+      process.exit();
+    };
     var serverPort = 8000;
     if (l.serverPort) {
       serverPort = l.serverPort;
@@ -153,6 +158,7 @@ module.exports = function(gulp) {
       }
     });
     if (l.database) {
+      
       console.log("starting mysql server");
       var start_command = l.database.start.split(" ");
       var base = start_command.shift();
@@ -167,18 +173,29 @@ module.exports = function(gulp) {
         var end_process = spawn(base, end_command);
         end_process.on("exit", function() {
           console.log("stopped mysql server");
+          l.stop();
         });
       });
     }
     cb(); 
   });
 
+  gulp.task('after_data', function(cb) {
+    if (typeof(l.after_data)==="function") {
+      l.after_data(cb);
+    } else {
+      cb();
+    }
+  });
+
+
   gulp.task('data', gulp.series('intermediate', function(taskDone) {
     l.dataHandler(function(allJSON) {
       l.fs.writeFile("./intermediate/data.json", JSON.stringify({data:allJSON}), taskDone);
     });
-  }));
+  }, "after_data"));
 
+ 
   l.build_list = [
     {
       dest:"./app.js",
@@ -202,10 +219,11 @@ module.exports = function(gulp) {
     cb();
   });
 
-  gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build", function() {
+  gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build", function(cb) {
     l.watch_list.forEach(function(d) {
       gulp.watch(d[0], d[1], d[2]);
     });
+    l.serverShutdownCb = cb;
   }));
 
   l.dataEncoding = "windows-1252";
