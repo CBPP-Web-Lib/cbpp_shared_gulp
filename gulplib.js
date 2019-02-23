@@ -13,6 +13,7 @@ module.exports = function(gulp) {
     server_process,
     fork = l.fork = child_process.fork,
     exec = l.exec = child_process.exec,
+    spawn = l.spawn = child_process.spawn,
     text_encoding = l.text_encoding = require("text-encoding"),
     request = l.request = require("request"),
     decompress = l.decompress = require("gulp-decompress");
@@ -152,10 +153,21 @@ module.exports = function(gulp) {
       }
     });
     if (l.database) {
-      var database_process = exec(l.database.start);
+      console.log("starting mysql server");
+      var start_command = l.database.start.split(" ");
+      var base = start_command.shift();
+      var database_process = spawn(base, start_command);
+      database_process.on("close", function() {
+        console.log("started mysql server");
+      });
       process.on("SIGINT", function() {
-        exec(l.database.stop);
-        process.exit();
+        console.log("stopping mysql server");
+        var end_command = l.database.stop.split(" ");
+        var base = end_command.shift();
+        var end_process = spawn(base, end_command);
+        end_process.on("exit", function() {
+          console.log("stopped mysql server");
+        });
       });
     }
     cb(); 
