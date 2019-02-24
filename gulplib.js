@@ -231,6 +231,10 @@ module.exports = function(gulp) {
   l.dataHandler = function(f_cb) {
     var allJSON = {};
     var fileRead = function(err, data, file, cb) {
+      if (err) {
+        console.log(err);
+        return;
+      }
       data = Buffer.from(data,'hex');
       data = new text_encoding.TextDecoder(l.dataEncoding).decode(data);
       parser(data, function(err, data) {
@@ -239,6 +243,10 @@ module.exports = function(gulp) {
     };
     var m = Math.pow(10, l.percentRounding-2);
     var fileParse = function(err, data, file, cb) {
+      if (err) {
+        console.log(err);
+        return;
+      }
       data.forEach(function(row) {
         row.forEach(function(cell, col) {
           if (cell==="") {return;}

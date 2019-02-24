@@ -16,11 +16,13 @@ module.exports = {
         ]
       },
       {
-        test: /\.(ttf|eot|woff|woff2|svg)$/,
+        test: /\.(ttf|eot|woff|woff2|svg|png|gif|jpeg|jpg)$/,
         use: {
           loader: "file-loader",
           options: {
-            name: "fonts/[name].[ext]",
+            outputPath: "../css_assets",
+            name: "[name].[ext]",
+            publicPath: '../css_assets'
           },
         },
       }
