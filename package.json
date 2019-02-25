@@ -36,7 +36,8 @@
     "wrapper-loader": "^1.0.1",
     "text-encoding": "^0.7.0",
     "request": "^2.88.0",
-    "gulp-decompress": "^2.0.2"
+    "gulp-decompress": "^2.0.2",
+    "raw-loader": "^1.0.0"
   },
   "author": "Nick Kasprak",
   "license": "ISC",
