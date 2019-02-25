@@ -20,11 +20,11 @@ module.exports = {
         use: {
           loader: "file-loader",
           options: {
-            outputPath: "css_assets",
+            outputPath: "../css_assets",
             name: "[name].[ext]",
             publicPath: 'css_assets'
-          },
-        },
+          }
+        }
       }
     ]
   }
