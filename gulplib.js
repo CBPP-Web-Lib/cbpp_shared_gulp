@@ -29,15 +29,23 @@ module.exports = function(gulp) {
     });
   };
   
+  l.indexFiles = [
+    ["./index.*", "app.js"]
+  ];
+
   function copyIndex() {
-    gulp.src('./index.*')
-      .pipe(l.replace("js/app.js","js/app.min.js"))
+    l.indexFiles.forEach(function(f) {
+      var prod_dest = "js/" + f[1].replace(".js",".min.js");
+      var debug_dest = "js/" + f[1];
+      gulp.src(f[0])
+      .pipe(l.replace(debug_dest,prod_dest))
       .pipe(gulp.dest("./build/"))
-      .pipe(l.replace("js/app.min.js","js/app.js"))
+      .pipe(l.replace(prod_dest, debug_dest))
       .pipe(l.rename(function(path) {
         path.basename += "_debug";
       }))
       .pipe(gulp.dest("./build/"));
+    });
   }
   
   l.clone = function(obj) {
@@ -299,4 +307,3 @@ module.exports = function(gulp) {
   l.gulp = gulp;
   return l;
 };
-  
