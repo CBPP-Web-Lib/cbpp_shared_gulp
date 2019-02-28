@@ -106,6 +106,7 @@ module.exports = function(gulp) {
       console.log("built prod bundle: " + prod_filename);
     };
     compiler_dev.watch(config.watchOptions, function(err, stats) {
+      //console.log(filename);
       if (err) {console.log(err);}
       if (stats.compilation.errors.length > 0) {
         console.log(stats.compilation.errors);
@@ -206,6 +207,7 @@ module.exports = function(gulp) {
  
   l.build_list = [
     {
+      entry:'./app.js',
       dest:"./app.js",
       config_transform: function(r) {return r;}
     }
@@ -213,7 +215,7 @@ module.exports = function(gulp) {
   
   gulp.task("build", function(cb) {
     l.build_list.forEach(function(build, i) {
-      doWebpack("./app.js", build.dest, build.config_transform, i);
+      doWebpack(build.entry, build.dest, build.config_transform, i);
     });
     cb();
   });
