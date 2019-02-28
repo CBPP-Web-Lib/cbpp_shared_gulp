@@ -29,12 +29,12 @@ module.exports = function(gulp) {
     });
   };
   
-  l.indexFiles = [
+  l.index_files = [
     ["./index.*", "app.js"]
   ];
 
   function copyIndex() {
-    l.indexFiles.forEach(function(f) {
+    l.index_files.forEach(function(f) {
       var prod_dest = "js/" + f[1].replace(".js",".min.js");
       var debug_dest = "js/" + f[1];
       gulp.src(f[0])
