@@ -75,6 +75,7 @@ function run_server(port, basedir) {
               res.write(parsed.body);
               res.end();
             } catch (ex) {
+              console.log("Invalid headers");
               console.log(parsed.headers);
             }
           });
