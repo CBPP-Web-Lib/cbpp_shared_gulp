@@ -70,9 +70,13 @@ function run_server(port, basedir) {
           if (url_arr[1]) {command += url_arr[1].split("&").join(" ");}
           exec(command, {encoding:"Buffer"}, function(err, f) {
             var parsed = parse_php_res(f);
-            res.writeHead(200, parsed.headers);
-            res.write(parsed.body);
-            res.end();
+            try {
+              res.writeHead(200, parsed.headers);
+              res.write(parsed.body);
+              res.end();
+            } catch (ex) {
+              console.log(parsed.headers);
+            }
           });
         } else {
           if (ext==="svg") {

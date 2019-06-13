@@ -159,13 +159,15 @@ module.exports = function(gulp) {
     if (l.serverPort) {
       serverPort = l.serverPort;
     }
-    server_process = fork(command);
-    server_process.on("message", function(m) {
-      console.log("Message from server: ", m);
-      if (m==="ready") {
-        server_process.send({serverPort: serverPort, basedir: basedir});
-      }
-    });
+    if (l.noServer !== true) {
+      server_process = fork(command);
+      server_process.on("message", function(m) {
+        console.log("Message from server: ", m);
+        if (m==="ready") {
+          server_process.send({serverPort: serverPort, basedir: basedir});
+        }
+      });
+    }
     if (l.database) {
       
       console.log("starting mysql server");
