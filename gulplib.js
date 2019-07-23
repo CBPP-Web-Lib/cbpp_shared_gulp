@@ -147,8 +147,13 @@ module.exports = function(gulp) {
   });
 
   gulp.task("server", function(cb) {
-    var command = __dirname + "/server.js";
+    var command;
     var basedir = process.cwd();
+    if (fs.existsSync(basedir + "/server.js")) {
+      command = basedir + "/server.js";
+    } else {
+      command = __dirname + "/server.js";
+    }
     l.stop = function() {
       if (typeof(l.serverShutdownCb)==="function") {
         l.serverShutdownCb();
