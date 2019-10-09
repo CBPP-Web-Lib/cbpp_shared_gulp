@@ -49,7 +49,8 @@ function run_server(port, basedir) {
           'Access-Control-Allow-Origin':"*",
           'Vary':"Access-Control-Allow-Origin",
           'Access-Control-Allow-Headers':'referrer, range, accept-encoding, x-requested-with',
-          'Access-Control-Allow-Methods':'POST, GET, OPTIONS'
+          'Access-Control-Allow-Methods':'POST, GET, OPTIONS',
+          'Cache-Control':'no-cache'
         };
         var file = req.url.split("?")[0];
         if (fs.lstatSync("./build" + file).isDirectory()) {
