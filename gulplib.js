@@ -233,6 +233,9 @@ module.exports = function(gulp) {
   ];
 
   gulp.task('preBuild', function(cb) {
+    if (typeof(l.preBuild)==="function") {
+      l.preBuild();
+    }
     cb();
   });
 
