@@ -82,7 +82,7 @@ module.exports = function(gulp) {
     var compiler_dev = webpack(config);
     var prod_config = l.clone(config);
     var prod_filename = filename.replace(".js","") + ".min" + ".js";
-    prod_config.mode = "production";
+    //prod_config.mode = "production";
     prod_config.output = {
       path: dest,
       filename: prod_filename
@@ -93,6 +93,7 @@ module.exports = function(gulp) {
       enforce: "pre",
       options: require("./babel_config.json")
     });
+    console.log(prod_config);
     var compiler_prod = webpack(prod_config);
     var prod_is_running = false;
     var pending_comp = false;
@@ -100,32 +101,53 @@ module.exports = function(gulp) {
     var prod_callback = function(err, stats) {
       prod_is_running = false;
       if (err) {console.log(err);}
-      if (stats.compilation.errors.length > 0) {
-        console.log(stats.compilation.errors);
+      try {
+        if (stats.compilation.errors.length > 0) {
+          console.log(stats.compilation.errors);
+        }
+      } catch (ex) {
+        console.error(ex);
+        return;
       }
-      console.log("built prod bundle: " + prod_filename);
+      console.log("Built production bundle: " + prod_filename);
     };
     compiler_dev.watch(config.watchOptions, function(err, stats) {
-      //console.log(filename);
-      if (err) {console.log(err);}
-      if (stats.compilation.errors.length > 0) {
-        console.log(stats.compilation.errors);
+      
+      if (err) {
+        console.log("Error with dev watch callback: ");
+        console.error(err);
       }
-      console.log("built dev bundle:" + filename);
+      if (stats.compilation.errors.length > 0) {
+        console.log("Stats complation error: ");
+        console.error(stats.compilation.errors);
+      }
+      console.log("Built dev bundle: " + filename);
       if (!prod_is_running) {
+        //console.log("No production compilation running; starting...");
         prod_is_running = true;
         compiler_prod.run(prod_callback);
       } else {
+        //console.log("Production compilation busy, waiting...");
         pending_comp = true;
-        compiler_prod.hooks.afterCompile.tap("WaitUntilDone", function() {
-          if (!pending_comp) {return;}
-          clearTimeout(delay_timer);
-          delay_timer = setTimeout(function() {
-            prod_is_running = true;
-            pending_comp = false;
+      }
+    });
+    compiler_prod.hooks.afterCompile.tap("WaitUntilDone", function() {
+      if (pending_comp) {
+        clearTimeout(delay_timer);
+        delay_timer = setTimeout(function() {
+          prod_is_running = true;
+          pending_comp = false;
+          //console.log("Old production built completed but new one pending, starting...");
+          try {
             compiler_prod.run(prod_callback);
-          }, 500);
-        });
+          } catch (ex) {
+            console.log("Too many quick changes, wait a few moments...");
+          }
+        }, 10);
+      } else {
+        setTimeout(function() {
+          console.log("No pending builds, idle...");
+        }, 20);
       }
     });
     compiler_dev.hooks.watchRun.tap("AlertChange", function() {
@@ -161,15 +183,19 @@ module.exports = function(gulp) {
       process.exit();
     };
     var serverPort = 8000;
+    var securePort = 9000;
     if (l.serverPort) {
       serverPort = l.serverPort;
+    }
+    if (l.securePort) {
+      securePort = l.securePort;
     }
     if (l.noServer !== true) {
       server_process = fork(command);
       server_process.on("message", function(m) {
         console.log("Message from server: ", m);
         if (m==="ready") {
-          server_process.send({serverPort: serverPort, basedir: basedir});
+          server_process.send({serverPort: serverPort, basedir: basedir, securePort: securePort});
         }
       });
     }
