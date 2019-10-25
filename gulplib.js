@@ -93,7 +93,6 @@ module.exports = function(gulp) {
       enforce: "pre",
       options: require("./babel_config.json")
     });
-    console.log(prod_config);
     var compiler_prod = webpack(prod_config);
     var prod_is_running = false;
     var pending_comp = false;
