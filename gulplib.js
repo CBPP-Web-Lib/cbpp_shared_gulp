@@ -85,7 +85,7 @@ module.exports = function(gulp) {
     var compiler_dev = webpack(config);
     var prod_config = l.clone(config);
     var prod_filename = filename.replace(".js","") + ".min" + ".js";
-    //prod_config.mode = "production";
+    prod_config.mode = "production";
     prod_config.output = {
       path: dest,
       filename: prod_filename
