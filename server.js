@@ -96,6 +96,9 @@ function run_server(port, basedir, securePort) {
           if (ext === "json") {
             headers['Content-Type'] = 'application/json';
           }
+          if (ext === "js") {
+            headers['Content-Type'] = 'text/javascript';
+          }
           res.writeHead(200, headers);
           res.write(file);
           res.end();

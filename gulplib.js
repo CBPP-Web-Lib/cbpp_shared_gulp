@@ -91,7 +91,7 @@ module.exports = function(gulp) {
       filename: prod_filename
     };
     prod_config.module.rules.push({
-      test: /\.js$/, 
+      test: /^((?!(core\-js|babel)).)*\.js$/, 
       loader: "babel-loader", 
       enforce: "pre",
       options: require("./babel_config.json")
@@ -185,7 +185,7 @@ module.exports = function(gulp) {
       process.exit();
     };
     var serverPort = 8000;
-    var securePort = 9000;
+    var securePort = 8100;
     if (l.serverPort) {
       serverPort = l.serverPort;
     }
