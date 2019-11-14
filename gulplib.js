@@ -34,12 +34,18 @@ module.exports = function(gulp) {
   ];
 
   function copyIndex() {
-    console.log("copy index.html");
+    console.log("copy index files");
     l.index_files.forEach(function(f) {
       var timestamp = Date.now();
+      var prefix = "";
+      var dest = "";
+      if (f[2]) {
+        prefix = "./" + f[2];
+        dest = f[2];
+      }
       var prod_dest = "js/" + f[1].replace(".js",".min.js");
       var debug_dest = "js/" + f[1];
-      gulp.src(f[0])
+      gulp.src(prefix + f[0])
         .pipe(l.replace(debug_dest,prod_dest + "?timestamp=" + timestamp))
         .pipe(l.replace("<head>",'<head>\n<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />'))
         .pipe(gulp.dest("./build/"))
@@ -47,7 +53,7 @@ module.exports = function(gulp) {
         .pipe(l.rename(function(path) {
           path.basename += "_debug";
         }))
-        .pipe(gulp.dest("./build/"));
+        .pipe(gulp.dest("./build/" + dest));
     });
   }
   
