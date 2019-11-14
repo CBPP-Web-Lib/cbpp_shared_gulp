@@ -48,7 +48,7 @@ module.exports = function(gulp) {
       gulp.src(prefix + f[0])
         .pipe(l.replace(debug_dest,prod_dest + "?timestamp=" + timestamp))
         .pipe(l.replace("<head>",'<head>\n<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />'))
-        .pipe(gulp.dest("./build/"))
+        .pipe(gulp.dest("./build/" + dest))
         .pipe(l.replace(prod_dest, debug_dest))
         .pipe(l.rename(function(path) {
           path.basename += "_debug";
