@@ -3,14 +3,17 @@ module.exports = function(gulp) {
   var l = {};
 
   var replace = l.replace = require("gulp-replace"),
+    uglify = l.uglify = require("gulp-uglify"),
     rename = l.rename = require("gulp-rename"),
     webpack = l.webpack = require("webpack"),
     path = l.path = require("path"),
     fs = l.fs = require("fs"),
     parser = l.parser = require("csv-parse"),
+    babel_config = require("./babel_config.json"),
     webpack_config = l.webpack_config = require("./webpack_config.js"),
     child_process = l.child_process = require('child_process'),
     server_process,
+    babel = l.babel = require("gulp-babel"),
     fork = l.fork = child_process.fork,
     exec = l.exec = child_process.exec,
     spawn = l.spawn = child_process.spawn,
@@ -78,47 +81,54 @@ module.exports = function(gulp) {
     return r;
   };
 
+  function doBabel(entry, filename) {
+    return new Promise(function(resolve, reject) {
+      filename = "./build/js/" + filename;
+      filename = filename.replace(".js",".full.js");
+      console.log("babeling and minifying: " + filename);
+      var dest = filename.replace(".full.js",".min.js");
+      gulp.src(filename)
+        .pipe(babel(babel_config))
+        .pipe(uglify())
+        .pipe(rename(dest))
+        .pipe(gulp.dest("./"))
+        .on("end", function() {
+          console.log("build prod bundle: " + dest.replace("./build/js/",""));
+          resolve();
+        });
+    });
+  }
+
+  function doProdWebpack(entry, filename, config_transform, i) {
+    return new Promise(function(resolve, reject) {
+      copyIndex();
+      var dest = path.resolve("./build/js");
+      var config = config_transform(l.clone(l.webpack_config));
+      config.entry = entry;
+      config.devtool = "none";
+      config.mode = "production";
+      var filename_prod = filename.replace(".js",".full.js");
+      config.output = {
+        path: dest,
+        filename: filename_prod
+      };
+      var compiler_prod = webpack(config);
+      compiler_prod.run(resolve);
+    });
+  }
+
   function doWebpack(entry, filename, config_transform, i) {
     copyIndex();
     var dest = path.resolve("./build/js");
     var config = config_transform(l.clone(l.webpack_config));
     config.entry = entry;
+    config.devtool = "eval-source-map";
     config.mode = "development";
     config.output = {
       path: dest,
       filename: filename
     };
     var compiler_dev = webpack(config);
-    var prod_config = l.clone(config);
-    var prod_filename = filename.replace(".js","") + ".min" + ".js";
-    prod_config.mode = "production";
-    prod_config.output = {
-      path: dest,
-      filename: prod_filename
-    };
-    prod_config.module.rules.push({
-      test: /^((?!(core\-js|babel)).)*\.js$/, 
-      loader: "babel-loader", 
-      enforce: "pre",
-      options: require("./babel_config.json")
-    });
-    var compiler_prod = webpack(prod_config);
-    var prod_is_running = false;
-    var pending_comp = false;
-    var delay_timer;
-    var prod_callback = function(err, stats) {
-      prod_is_running = false;
-      if (err) {console.log(err);}
-      try {
-        if (stats.compilation.errors.length > 0) {
-          console.log(stats.compilation.errors);
-        }
-      } catch (ex) {
-        console.error(ex);
-        return;
-      }
-      console.log("Built production bundle: " + prod_filename);
-    };
     compiler_dev.watch(config.watchOptions, function(err, stats) {
       if (err) {
         console.log("Error with dev watch callback: ");
@@ -129,33 +139,6 @@ module.exports = function(gulp) {
         console.error(stats.compilation.errors);
       }
       console.log("Built dev bundle: " + filename);
-      if (!prod_is_running) {
-        //console.log("No production compilation running; starting...");
-        prod_is_running = true;
-        compiler_prod.run(prod_callback);
-      } else {
-        //console.log("Production compilation busy, waiting...");
-        pending_comp = true;
-      }
-    });
-    compiler_prod.hooks.afterCompile.tap("WaitUntilDone", function() {
-      if (pending_comp) {
-        clearTimeout(delay_timer);
-        delay_timer = setTimeout(function() {
-          prod_is_running = true;
-          pending_comp = false;
-          //console.log("Old production built completed but new one pending, starting...");
-          try {
-            compiler_prod.run(prod_callback);
-          } catch (ex) {
-            console.log("Too many quick changes, wait a few moments...");
-          }
-        }, 10);
-      } else {
-        setTimeout(function() {
-          console.log("No pending builds, idle...");
-        }, 20);
-      }
     });
     compiler_dev.hooks.watchRun.tap("AlertChange", function() {
       if (i===0) {console.log("change detected");}
@@ -254,17 +237,12 @@ module.exports = function(gulp) {
     }
   ];
   
-  gulp.task("build", function(cb) {
+  gulp.task("build-dev", function(cb) {
     l.build_list.forEach(function(build, i) {
       doWebpack(build.entry, build.dest, build.config_transform, i);
     });
     cb();
   });
-
-  l.watch_list = [
-    [['./**/*.csv'],{usePolling: false},gulp.series('data')],
-    [['./index.*'],{usePolling: false},gulp.series('copyIndex')]
-  ];
 
   gulp.task('preBuild', function(cb) {
     if (typeof(l.preBuild)==="function") {
@@ -273,14 +251,34 @@ module.exports = function(gulp) {
     cb();
   });
 
-  gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build", function(cb) {
+  gulp.task("build", gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), function(cb) {
+    var Promises = [];
+    l.build_list.forEach(function(build, i) {
+      Promises.push(new Promise(function(resolve, reject) {
+        doProdWebpack(build.entry, build.dest, build.config_transform, i).then(function() {
+          doBabel(build.entry, build.dest, build.config_transform, i).then(resolve);
+        });
+      }));
+    });
+    Promise.all(Promises).then(function() {
+      console.log("Done with production bundles");
+      cb();
+    });
+  }));
+
+  l.watch_list = [
+    [['./**/*.csv'],{usePolling: false},gulp.series('data')],
+    [['./index.*'],{usePolling: false},gulp.series('copyIndex')]
+  ];
+
+  gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build-dev", function(cb) {
     l.watch_list.forEach(function(d) {
       gulp.watch(d[0], d[1], d[2]);
     });
     l.serverShutdownCb = cb;
   }));
 
-  l.dataEncoding = "windows-1252";
+  l.dataEncoding = "utf-8";
   l.percentRounding = 2;
   l.dataHandler = function(f_cb) {
     var allJSON = {};
