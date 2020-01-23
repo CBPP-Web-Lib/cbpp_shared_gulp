@@ -40,7 +40,9 @@
     "request": "^2.88.0",
     "gulp-decompress": "^3.0.0",
     "raw-loader": "^4.0.0",
-    "sanitize-filename": "^1.6.3"
+    "sanitize-filename": "^1.6.3",
+    "fibers": "^4.0.2",
+    "sass": "^1.25.0"
   },
   "author": "Nick Kasprak",
   "license": "ISC",
