@@ -273,8 +273,14 @@ module.exports = function(gulp) {
 
   gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build-dev", function(cb) {
     l.watch_list.forEach(function(d) {
-      gulp.watch(d[0], d[1], d[2]);
+      var watcher = gulp.watch(d[0], d[1], d[2]);
+      if (typeof(d[3])==="function") {
+        watcher.on("change", function(file) {
+          d[3](file);
+        });
+      }
     });
+    
     l.serverShutdownCb = cb;
   }));
 
