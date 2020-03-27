@@ -267,20 +267,23 @@ module.exports = function(gulp) {
   }));
 
   l.watch_list = [
-    [['./**/*.csv'],{usePolling: false},gulp.series('data')],
+    [['*.csv', "./data/*.csv","./csv/*.csv"],{usePolling: false},gulp.series('data')],
     [['./index.*'],{usePolling: false},gulp.series('copyIndex')]
   ];
 
   gulp.task('build-watch', gulp.series(gulp.parallel('buildDirectory', 'server', 'preBuild'), "build-dev", function(cb) {
+    var watchers = [];
     l.watch_list.forEach(function(d) {
       var watcher = gulp.watch(d[0], d[1], d[2]);
       if (typeof(d[3])==="function") {
         watcher.on("change", function(file) {
-          d[3](file);
+          setTimeout(function() {
+            d[3](file);
+          }, 200);
         });
       }
+      watchers.push(watcher);
     });
-    
     l.serverShutdownCb = cb;
   }));
 
