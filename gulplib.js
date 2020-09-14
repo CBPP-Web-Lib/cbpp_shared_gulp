@@ -9,11 +9,9 @@ module.exports = function(gulp) {
     path = l.path = require("path"),
     fs = l.fs = require("fs"),
     parser = l.parser = require("csv-parse"),
-    babel_config = require("./babel_config.json"),
     webpack_config = l.webpack_config = require("./webpack_config.js"),
     child_process = l.child_process = require('child_process'),
     server_process,
-    babel = l.babel = require("gulp-babel"),
     fork = l.fork = child_process.fork,
     exec = l.exec = child_process.exec,
     spawn = l.spawn = child_process.spawn,
@@ -81,24 +79,6 @@ module.exports = function(gulp) {
     return r;
   };
 
-  function doBabel(entry, filename) {
-    return new Promise(function(resolve, reject) {
-      filename = "./build/js/" + filename;
-      filename = filename.replace(".js",".full.js");
-      console.log("babeling and minifying: " + filename);
-      var dest = filename.replace(".full.js",".min.js");
-      gulp.src(filename)
-        .pipe(babel(babel_config))
-        .pipe(uglify())
-        .pipe(rename(dest))
-        .pipe(gulp.dest("./"))
-        .on("end", function() {
-          console.log("build prod bundle: " + dest.replace("./build/js/",""));
-          resolve();
-        });
-    });
-  }
-
   function doProdWebpack(entry, filename, config_transform, i) {
     return new Promise(function(resolve, reject) {
       copyIndex();
@@ -107,7 +87,10 @@ module.exports = function(gulp) {
       config.entry = entry;
       config.devtool = "none";
       config.mode = "production";
-      var filename_prod = filename.replace(".js",".full.js");
+      config.module.rules.push(
+        { test: /\.js$/,   exclude: /(node_modules\/core-js)/, use: {loader: 'babel-loader', options: {presets: ['@babel/preset-env']}}},
+      );
+      var filename_prod = filename.replace(".js",".min.js");
       config.output = {
         path: dest,
         filename: filename_prod
@@ -122,7 +105,7 @@ module.exports = function(gulp) {
     var dest = path.resolve("./build/js");
     var config = config_transform(l.clone(l.webpack_config));
     config.entry = entry;
-    config.devtool = "eval-source-map";
+    config.devtool = "source-map";
     config.mode = "development";
     config.output = {
       path: dest,
@@ -256,7 +239,7 @@ module.exports = function(gulp) {
     l.build_list.forEach(function(build, i) {
       Promises.push(new Promise(function(resolve, reject) {
         doProdWebpack(build.entry, build.dest, build.config_transform, i).then(function() {
-          doBabel(build.entry, build.dest, build.config_transform, i).then(resolve);
+          resolve();
         });
       }));
     });
