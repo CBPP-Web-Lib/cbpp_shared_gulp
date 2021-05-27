@@ -7,7 +7,7 @@ module.exports = {
     rules: [
       { test: /\.css$/, use: ['style-loader', 'css-loader']},
       { test: /\.html$/, use: 'raw-loader' },
-      { test: /_commonJS.js/, use: "imports-loader?define=>false" },
+      //{ test: /_commonJS.js/, use: "imports-loader?define=>false" },
       {
         test: /\.scss$/,
         use: [
