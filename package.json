@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CenterOnBudget/cbpp_shared_gulp.git"
+    "url": "git+https://github.com/CBPP-Web-Lib/cbpp_shared_gulp.git"
   },
   "dependencies": {
     "@babel/cli": "^7.12.13",
@@ -46,7 +46,7 @@
   "author": "Nick Kasprak",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/CenterOnBudget/cbpp_shared_gulp/issues"
+    "url": "https://github.com/CBPP-Web-Lib/cbpp_shared_gulp/issues"
   },
-  "homepage": "https://github.com/CenterOnBudget/cbpp_shared_gulp#readme"
+  "homepage": "https://github.com/CBPP-Web-Lib/cbpp_shared_gulp#readme"
 }
