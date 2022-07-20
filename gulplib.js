@@ -85,7 +85,7 @@ module.exports = function(gulp) {
       var dest = path.resolve("./build/js");
       var config = config_transform(l.clone(l.webpack_config));
       config.entry = entry;
-      config.devtool = "none";
+      config.devtool = false;
       config.mode = "production";
       config.module.rules.push(
         { test: /\.js$/,   exclude: /(node_modules\/core-js)/, use: {loader: 'babel-loader', options: {presets: ['@babel/preset-env']}}},
