@@ -281,7 +281,7 @@ module.exports = function(gulp) {
       }
       data = Buffer.from(data,'hex');
       data = new text_encoding.TextDecoder(l.dataEncoding).decode(data);
-      parser(data, function(err, data) {
+      parser.parse(data, function(err, data) {
         fileParse(err, data, file, cb);
       });
     };
