@@ -3,6 +3,17 @@ module.exports = {
   watchOptions: {
     ignored: /(.*?)node_modules\/((?!cbpp_).*)/,
   },
+  resolve:{
+    fallback: {
+      "stream": require.resolve("stream-browserify"),
+      "buffer": require.resolve("buffer/")
+    }
+  },
+  plugins: [
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
+  ],
   module: {
     rules: [
       { test: /\.css$/, use: ['style-loader', 'css-loader']},
