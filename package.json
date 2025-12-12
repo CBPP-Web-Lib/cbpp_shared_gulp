@@ -46,5 +46,8 @@
   "bugs": {
     "url": "https://github.com/CBPP-Web-Lib/cbpp_shared_gulp/issues"
   },
-  "homepage": "https://github.com/CBPP-Web-Lib/cbpp_shared_gulp#readme"
+  "homepage": "https://github.com/CBPP-Web-Lib/cbpp_shared_gulp#readme",
+  "devDependencies": {
+    "stream-browserify": "^3.0.0"
+  }
 }
